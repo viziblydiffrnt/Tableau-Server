@@ -14,8 +14,12 @@ import urllib
 import zipfile
 import shutil
 import json
-
-
+import binascii
+#
+import Crypto
+from Crypto.PublicKey import RSA
+from Crypto.Cipher import PKCS1_v1_5
+from base64 import b64decode
 
 
 import logging
@@ -74,13 +78,13 @@ def generatePublicKey():
     return response_values
 
 
-
-
 def vizportalLogin(encryptedPassword, keyId):
-    payload = "{\"method\":\"login\",\"params\":{\"username\":%s, \"encryptedPassword\":%s, \"keyId\":%s}}" % (tableau_username, encryptedPassword,keyId)
+    encodedPassword = binascii.b2a_hex(encryptedPassword)
+    payload = "{\"method\":\"login\",\"params\":{\"username\":\"%s\", \"encryptedPassword\":\"%s\", \"keyId\":\"%s\"}}" % (tableau_username, encodedPassword,keyId)
+    #print payload
     endpoint = "login"
     url = tab_server_url + "/vizportal/api/web/v1/"+endpoint
-    print url
+    #print url
     headers = {
     'content-type': "application/json;charset=UTF-8",
     'accept': "application/json, text/plain, */*",
@@ -88,6 +92,14 @@ def vizportalLogin(encryptedPassword, keyId):
     }
     response = session.post(url, data=payload, headers=headers)
 
+# Encrypt with RSA public key (it's important to use PKCS11)
+def assymmetric_encrypt(val, public_key):
+    modulusDecoded = long(public_key["n"], 16)
+    exponentDecoded = long(public_key["e"], 16)
+    keyPub = RSA.construct((modulusDecoded, exponentDecoded))
+    # Generate a cypher using the PKCS1.5 standard
+    cipher = PKCS1_v1_5.new(keyPub)
+    return cipher.encrypt(val)
 
 if __name__ == '__main__':
 
