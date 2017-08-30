@@ -23,9 +23,10 @@ from base64 import b64decode
 
 
 import logging
-from sheriff_config import tab_server_settings
+from util.import_config import import_config
 
-from slalom_sheriff import _encode_for_display
+# Import settings from config file
+tab_server_settings, postgres_settings, download_settings, email_settings, schedule_settings = import_config()
 
 tab_server_url = tab_server_settings['tab_server_url']
 tableau_username = tab_server_settings['tableau_username']
